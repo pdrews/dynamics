@@ -35,37 +35,26 @@ int main()
   data.open("/media/data/logs/MPPI_SystemID/Current/Model_Parameters/data.txt");
   int sampleNum = 0;
   while(getline(data, line)) {
-//    cout << line << endl;
     boost::char_separator<char> sep(",");
     boost::tokenizer<boost::char_separator<char>> toks(line,sep);
     boost::tokenizer<boost::char_separator<char>>::iterator tok = toks.begin();
-//    cout << *tok << " ";
     X(0,sampleNum) = atof(tok->c_str());
     tok++;
-//    cout << *tok << " ";
     X(1,sampleNum) = atof(tok->c_str());
     tok++;
-//    cout << *tok << " ";
     X(2,sampleNum) = atof(tok->c_str());
     tok++;
-//    cout << *tok << " ";
     X(3,sampleNum) = atof(tok->c_str());
     tok++;
-//    cout << *tok << " ";
     heading(0,sampleNum) = atof(tok->c_str());
     tok++;
-//    cout << *tok << " ";
     U(0,sampleNum) = atof(tok->c_str());
     tok++;
-//    cout << *tok << " ";
     U(1,sampleNum) = atof(tok->c_str());
-//    cout << "X " << X.col(sampleNum) << endl;
-//    cout << "U " << U.col(sampleNum) << endl;
-//    cout << "heading " << heading(sampleNum) << endl;
     sampleNum++;
   }
   cout << "Finished reading " << sampleNum << " samples" << endl;
-  double dt = 0.02;
+  double dt = 1.0/40.0;
 
   //Iterate through each pair in our data, putting it in our FG
   Expression<MatrixTheta> theta_expr(50);
@@ -90,15 +79,34 @@ int main()
   result.print("Final Result:\n");
 
   // Get the average and mean squared error
+  Eigen::Matrix<double,X_DIM,Eigen::Dynamic> der_pred(X_DIM,numSamples);
+  Eigen::Matrix<double,X_DIM,Eigen::Dynamic> der_actual(X_DIM,numSamples);
+
   MatrixX squared_error = MatrixX::Zero();
+  MatrixX squared_error_der = MatrixX::Zero();
   MatrixBasis J;
   MatrixTheta thetaEst = result.at<MatrixTheta>(50);
+  ofstream sed, sedp;
+  sed.open("/media/data/logs/MPPI_SystemID/Current/Model_Parameters/sed.txt");
+  sedp.open("/media/data/logs/MPPI_SystemID/Current/Model_Parameters/sedp.txt");
   for(int i=0; i<numSamples-1; i++) {
     Predictor predict(X.col(i),U.col(i),heading(i), dt);
     MatrixX predicted = predict(thetaEst,J);
     squared_error += (predicted - X.col(i+1)).cwiseProduct(predicted - X.col(i+1));
+
+    //Calc der stuff
+    MatrixX der = (X.col(i) - X.col(i+1)) / dt;
+    MatrixX derPred = (X.col(i) - predicted) / dt;
+    sed << der(0) << "," << der(1) << "," << der(2) << "," << der(3) << endl;
+    sedp << derPred(0) << "," << derPred(1) << "," << derPred(2) << "," << derPred(3) << endl;
+//    der_pred.col(i) = derPred.transpose();
+//    der.col(i) = der.transpose();
+    squared_error_der += (der - derPred).cwiseProduct(der - derPred);
   }
   squared_error = squared_error.array() / (numSamples-1);
+  squared_error_der = squared_error_der.array() / (numSamples-1);
   cout << "Squared error is \n" << squared_error << endl;
+  cout << "Squared error of derivative is \n" << squared_error_der << endl;
+
 
 }
