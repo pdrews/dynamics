@@ -7,7 +7,6 @@
 #include <gtsam/nonlinear/ExpressionFactorGraph.h>
 #include <gtsam/nonlinear/LevenbergMarquardtOptimizer.h>
 #include <gtsam/nonlinear/Values.h>
-#include <gtsam_unstable/dynamics/Predictor.h>
 
 #include <iostream>
 
@@ -15,32 +14,46 @@ using namespace gtsam;
 
 int main()
 {
-  NonlinearFactorGraph graph;
+
+  //Load up all of our data
+  int numSamples;
+  Matrix<double,X_DIM,Dynamic> X;
+  Matrix<double,U_DIM,Dynamic> U;
+  Matrix<double,1,Dynamic> heading;
+  double dt = 0.02;
+
+  //Iterate through each pair in our data, putting it in our FG
+  Expression<MatrixTheta> theta_expr(50);
   Vector3 sigmas;
   sigmas << 0.3,0.3,0.3;
   noiseModel::Diagonal::shared_ptr R = noiseModel::Diagonal::Sigmas(sigmas);
 
+  for(int i=0; i<numSamples-1; i++) {
+    Predictor predict(X.col(i),U.col(i),heading(i), dt);
+    Expression<MatrixX> predict_expr(predict, theta_expr);
+    graph.addExpressionFactor(R, X.col(i+1), predict_expr);
+  }
+  //Solve the FG and spit out the thetas
+  NonlinearFactorGraph graph;
+
   Values vals;
-  Matrix51 Theta;
-  Theta << 0.1,0.1,0.1,0.1,0.1;
-
+  MatrixTheta Theta = MatrixTheta::Zeros();
   vals.insert(50, Theta);
-  Expression<Matrix51> theta_expr(50);
-  Matrix31 X, X2;
-  X << 0,0,0;
-  X2 << 0.3,0.3,0.3;
 
-  Predictor predict(X, 0.1);
-  Expression<Matrix31> predict_expr(predict, theta_expr);
-  graph.addExpressionFactor(R, X2, predict_expr);
-  graph.print("Factor Graph:\n");
+
+//  graph.print("Factor Graph:\n");
   LevenbergMarquardtOptimizer optimizer(graph, vals);
   Values result = optimizer.optimize();
   result.print("Final Result:\n");
 
-  Matrix31 Xpredict;
-  Matrix51 ThetaOptimized = result.at<Matrix51>(50);
-  Matrix35 J;
-  Xpredict = predict(ThetaOptimized, J);
-  std::cout << "Predicted X: \n" << Xpredict << std::endl;
+  // Get the average and mean squared error
+  MatrixX squared_error = MatrixX::Zeros();
+  for(int i=0; i<numSamples-1; i++) {
+    Predictor predict(X.col(i),U.col(i),heading(i), dt);
+    MatrixX predicted = predict(theta_expr);
+    squared_error += (predicted - X.col(i+1)).cwiseProduct(predicted - X.col(i+1));
+  }
+  squared_error = squared_error.array() / (numSamples-1);
+  std::cout << "Squared error is \n" << squared_error << std::endl;
+
 }

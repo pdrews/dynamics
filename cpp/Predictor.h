@@ -8,7 +8,6 @@
 
 #include <gtsam_unstable/base/dllexport.h>
 #include <gtsam/geometry/Pose3.h>
-#include <gtsam/base/ProductLieGroup.h>
 
 #define X_DIM 4
 #define U_DIM 2
@@ -16,18 +15,17 @@
 
 namespace gtsam {
 
-typedef Matrix<double,4,100> MatrixBasis;
-typedef Matrix<double,100,1> MatrixTheta;
-typedef Matrix<double,4,1> MatrixX;
-typedef Matrix<double,2,1> MatrixU;
+typedef Matrix<double,X_DIM,THETA_DIM> MatrixBasis;
+typedef Matrix<double,THETA_DIM,1> MatrixTheta;
+typedef Matrix<double,X_DIM,1> MatrixX;
+typedef Matrix<double,U_DIM,1> MatrixU;
 
 struct Predictor {
-  Predictor(Matrix31 x,double dt);
-  Matrix31 operator()(Matrix51 theta, OptionalJacobian<3,5> H);
+  Predictor(MatrixX x, MatrixU u, double heading, double dt);
+  MatrixX operator()(MatrixTheta theta, OptionalJacobian<X_DIM,THETA_DIM> H);
 private:
-  //std:vector<RBF> rbf;
-  Matrix35 dt_rbf_;
-  Matrix31 x_;
+  MatrixBasis dt_basis_;
+  MatrixX x_;
 
 };
 

@@ -36,7 +36,7 @@ typedef Matrix<double,2,1> MatrixU;
 MatrixBasis Basis(MatrixX x, MatrixU u, double heading) {
   // For now, just some hard coded centroids
   // And for now, we will ignore the input u
-  MatrixBasis b;
+  MatrixBasis b = MatrixBasis::Zero();
   Matrix<double,THETA_DIM/X_DIM,1> basis;
 
   double alpha_f = 0;
@@ -80,20 +80,25 @@ MatrixBasis Basis(MatrixX x, MatrixU u, double heading) {
   basis(23) = pow(throttle,2);
   basis(24) = pow(throttle,3);
 
+  b.block<1,X_DIM>(0,0) = basis;
+  b.block<1,X_DIM>(1,X_DIM) = basis;
+  b.block<1,X_DIM>(2,2*X_DIM) = basis;
+  b.block<1,X_DIM>(3,3*X_DIM) = basis;
+
+  return b;
+
 }
 
-typedef std::function<Matrix31(Matrix31, double)> RBF;
+typedef std::function<MatrixBasis(MatrixX, MatrixU, double)> BASIS;
 
 
-  Predictor::Predictor(Matrix31 x,double dt) {
+  Predictor::Predictor(MatrixX x, MatrixU u, double heading, double dt) {
     x_ = x;
-    RBF rbf(Xdot);
-    for (int i=0;i<5;i++) {
-      dt_rbf_.col(i) = dt * rbf(x,i*0.5);
-    }
+    BASIS basis(Basis);
+    dt_basis_ = dt * basis(x, u, heading);
   }
-  Matrix31 Predictor::operator()(Matrix51 theta, OptionalJacobian<3,5> H) {
-    // calculate f(x,y) as sum of RBF:
+  MatrixX Predictor::operator()(MatrixTheta theta, OptionalJacobian<X_DIM,THETA_DIM> H) {
+    // calculate f(x,y) as sum of basis functions:
     // i.e., \sum w_i rbf(x,u)
     if (H) *H = dt_rbf_;
     return x_ + dt_rbf_*theta; // nxm * mx1
