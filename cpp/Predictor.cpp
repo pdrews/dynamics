@@ -17,10 +17,10 @@
 
 namespace gtsam{
 
-typedef Matrix<double,4,100> MatrixBasis;
-typedef Matrix<double,100,1> MatrixTheta;
-typedef Matrix<double,4,1> MatrixX;
-typedef Matrix<double,2,1> MatrixU;
+//typedef Eigen::Matrix<double,4,100> MatrixBasis;
+//typedef Eigen::Matrix<double,100,1> MatrixTheta;
+//typedef Eigen::Matrix<double,4,1> MatrixX;
+//typedef Eigen::Matrix<double,2,1> MatrixU;
 
 /* Calculate basis functions for a specified X and U
  * X is expected to be:
@@ -37,7 +37,7 @@ MatrixBasis Basis(MatrixX x, MatrixU u, double heading) {
   // For now, just some hard coded centroids
   // And for now, we will ignore the input u
   MatrixBasis b = MatrixBasis::Zero();
-  Matrix<double,THETA_DIM/X_DIM,1> basis;
+  Eigen::Matrix<double,THETA_DIM/X_DIM,1> basis;
 
   double alpha_f = 0;
   double alpha_r = 0;
@@ -55,20 +55,22 @@ MatrixBasis Basis(MatrixX x, MatrixU u, double heading) {
     basis(9) = 0.0;
   }
 
+//  std::cout << "af " << alpha_f << " ar " << alpha_r << " steering " << steering << " throttle " << throttle << " sd " << sd << std::endl;
+
   basis(0) = throttle;
   basis(1) = x(1)/10.0;
   basis(2) = sd*tan(alpha_f)/1200.0;
-  basis(3) = sd*tan(alpha_f) * abs(tan(alpha_f))/(1200.0*1200.0);
+  basis(3) = sd*tan(alpha_f) * std::abs(tan(alpha_f))/(1200.0*1200.0);
   basis(4) = sd*pow(tan(alpha_f),3)/(1200.0*1200.0*1200.0);
   basis(5) = x(3)*x(2)/25.0;
   basis(6) = x(3)/10.0;
   basis(7) = x(2)/10.0;
   basis(8) = sd;
   basis(10) = tan(alpha_f)/1400.0;
-  basis(11) = tan(alpha_f) * abs(tan(alpha_f))/(1400.0*1400.0);
+  basis(11) = tan(alpha_f) * std::abs(tan(alpha_f))/(1400.0*1400.0);
   basis(12) = pow(tan(alpha_f),3)/(pow(1400.0,3));
   basis(13) = tan(alpha_r)/(40.0);
-  basis(14) = tan(alpha_r)*abs(tan(alpha_r))/(pow(40.0,2));
+  basis(14) = tan(alpha_r)*std::abs(tan(alpha_r))/(pow(40.0,2));
   basis(15) = pow(tan(alpha_r),3)/pow(40.0,3);
   basis(16) = x(3)*x(1)/50.0;
   basis(17) = x(0);
@@ -80,10 +82,13 @@ MatrixBasis Basis(MatrixX x, MatrixU u, double heading) {
   basis(23) = pow(throttle,2);
   basis(24) = pow(throttle,3);
 
-  b.block<1,X_DIM>(0,0) = basis;
-  b.block<1,X_DIM>(1,X_DIM) = basis;
-  b.block<1,X_DIM>(2,2*X_DIM) = basis;
-  b.block<1,X_DIM>(3,3*X_DIM) = basis;
+  b.block(0,0,1,THETA_DIM/X_DIM) = basis.transpose();
+  b.block(1,THETA_DIM/X_DIM,1,THETA_DIM/X_DIM) = basis.transpose();
+  b.block(2,2*THETA_DIM/X_DIM,1,THETA_DIM/X_DIM) = basis.transpose();
+  b.block(3,3*THETA_DIM/X_DIM,1,THETA_DIM/X_DIM) = basis.transpose();
+
+//  std::cout << "Basis Matrix: " << b << std::endl;
+//  std::cout << "Small Matrix: " << basis << std::endl;
 
   return b;
 
@@ -100,8 +105,8 @@ typedef std::function<MatrixBasis(MatrixX, MatrixU, double)> BASIS;
   MatrixX Predictor::operator()(MatrixTheta theta, OptionalJacobian<X_DIM,THETA_DIM> H) {
     // calculate f(x,y) as sum of basis functions:
     // i.e., \sum w_i rbf(x,u)
-    if (H) *H = dt_rbf_;
-    return x_ + dt_rbf_*theta; // nxm * mx1
+    if (H) *H = dt_basis_;
+    return x_ + dt_basis_*theta; // nxm * mx1
   }
 
 

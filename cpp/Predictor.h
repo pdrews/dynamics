@@ -15,10 +15,10 @@
 
 namespace gtsam {
 
-typedef Matrix<double,X_DIM,THETA_DIM> MatrixBasis;
-typedef Matrix<double,THETA_DIM,1> MatrixTheta;
-typedef Matrix<double,X_DIM,1> MatrixX;
-typedef Matrix<double,U_DIM,1> MatrixU;
+typedef Eigen::Matrix<double,X_DIM,THETA_DIM> MatrixBasis;
+typedef Eigen::Matrix<double,THETA_DIM,1> MatrixTheta;
+typedef Eigen::Matrix<double,X_DIM,1> MatrixX;
+typedef Eigen::Matrix<double,U_DIM,1> MatrixU;
 
 struct Predictor {
   Predictor(MatrixX x, MatrixU u, double heading, double dt);
