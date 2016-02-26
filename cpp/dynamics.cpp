@@ -64,6 +64,10 @@ int main()
 
   NonlinearFactorGraph graph;
   for(int i=0; i<numSamples-1; i++) {
+    if(std::abs(X(1,i) - X(1,i+1))/dt > 15) {
+      cout << "Skipping a sample between bag files" << endl;
+      continue;
+    }
     Predictor predict(X.col(i),U.col(i),heading(0,i), dt);
     Expression<MatrixX> predict_expr(predict, theta_expr);
     graph.addExpressionFactor<MatrixX>(R, X.col(i+1), predict_expr);
@@ -89,7 +93,13 @@ int main()
   ofstream sed, sedp;
   sed.open("/media/data/logs/MPPI_SystemID/Current/Model_Parameters/sed.txt");
   sedp.open("/media/data/logs/MPPI_SystemID/Current/Model_Parameters/sedp.txt");
+  int skips = 0;
   for(int i=0; i<numSamples-1; i++) {
+    if(std::abs(X(1,i) - X(1,i+1))/dt > 15) {
+      cout << "Skipping an error between bag files" << endl;
+      continue;
+
+    }
     Predictor predict(X.col(i),U.col(i),heading(i), dt);
     MatrixX predicted = predict(thetaEst,J);
     squared_error += (predicted - X.col(i+1)).cwiseProduct(predicted - X.col(i+1));
@@ -103,8 +113,8 @@ int main()
 //    der.col(i) = der.transpose();
     squared_error_der += (der - derPred).cwiseProduct(der - derPred);
   }
-  squared_error = squared_error.array() / (numSamples-1);
-  squared_error_der = squared_error_der.array() / (numSamples-1);
+  squared_error = squared_error.array() / ((numSamples-skips)-1);
+  squared_error_der = squared_error_der.array() / ((numSamples-skips)-1);
   cout << "Squared error is \n" << squared_error << endl;
   cout << "Squared error of derivative is \n" << squared_error_der << endl;
 
