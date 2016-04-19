@@ -9,9 +9,9 @@
 #include <gtsam_unstable/base/dllexport.h>
 #include <gtsam/geometry/Pose3.h>
 
-#define X_DIM 4
+#define X_DIM 5
 #define U_DIM 2
-#define THETA_DIM 100
+#define THETA_DIM 130
 
 namespace gtsam {
 

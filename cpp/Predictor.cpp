@@ -54,6 +54,7 @@ MatrixBasis Basis(MatrixX x, MatrixU u, double heading) {
     alpha_f = -steering;
     basis(9) = 0.0;
   }
+  double kappa = (x(4)-(x(2)*(13.64/8.764)))/(x(2)*(13.64/8.764));
 
 //  std::cout << "af " << alpha_f << " ar " << alpha_r << " steering " << steering << " throttle " << throttle << " sd " << sd << std::endl;
 
@@ -81,11 +82,16 @@ MatrixBasis Basis(MatrixX x, MatrixU u, double heading) {
   basis(22) = heading*x(0);
   basis(23) = pow(throttle,2);
   basis(24) = pow(throttle,3);
+  basis(25) = kappa/(1.0+kappa);
+  //basis(25) =
+  //basis(25) =
+  //basis(25) =
 
   b.block(0,0,1,THETA_DIM/X_DIM) = basis.transpose();
   b.block(1,THETA_DIM/X_DIM,1,THETA_DIM/X_DIM) = basis.transpose();
   b.block(2,2*THETA_DIM/X_DIM,1,THETA_DIM/X_DIM) = basis.transpose();
   b.block(3,3*THETA_DIM/X_DIM,1,THETA_DIM/X_DIM) = basis.transpose();
+  b.block(4,4*THETA_DIM/X_DIM,1,THETA_DIM/X_DIM) = basis.transpose();
 
 //  std::cout << "Basis Matrix: " << b << std::endl;
 //  std::cout << "Small Matrix: " << basis << std::endl;

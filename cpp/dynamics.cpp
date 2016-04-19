@@ -6,6 +6,7 @@
 #include <gtsam/nonlinear/NonlinearFactorGraph.h>
 #include <gtsam/nonlinear/ExpressionFactorGraph.h>
 #include <gtsam/nonlinear/LevenbergMarquardtOptimizer.h>
+#include <gtsam/nonlinear/Marginals.h>
 #include <gtsam/nonlinear/Values.h>
 
 #include <boost/tokenizer.hpp>
@@ -35,6 +36,7 @@ int main()
   data.open("/media/data/logs/MPPI_SystemID/Current/Model_Parameters/data.txt");
   int sampleNum = 0;
   while(getline(data, line)) {
+    double left, right;
     boost::char_separator<char> sep(",");
     boost::tokenizer<boost::char_separator<char>> toks(line,sep);
     boost::tokenizer<boost::char_separator<char>>::iterator tok = toks.begin();
@@ -51,6 +53,11 @@ int main()
     U(0,sampleNum) = atof(tok->c_str());
     tok++;
     U(1,sampleNum) = atof(tok->c_str());
+    left = atof(tok->c_str());
+    tok++;
+    right = atof(tok->c_str());
+    X(4,sampleNum) = (left+right) / 2.0;
+
     sampleNum++;
   }
   cout << "Finished reading " << sampleNum << " samples" << endl;
@@ -90,7 +97,7 @@ int main()
   MatrixX squared_error_der = MatrixX::Zero();
   MatrixBasis J;
   MatrixTheta thetaEst = result.at<MatrixTheta>(50);
-  ofstream sed, sedp;
+  ofstream sed, sedp, cov;
   sed.open("/media/data/logs/MPPI_SystemID/Current/Model_Parameters/sed.txt");
   sedp.open("/media/data/logs/MPPI_SystemID/Current/Model_Parameters/sedp.txt");
   int skips = 0;
@@ -118,5 +125,17 @@ int main()
   cout << "Squared error is \n" << squared_error << endl;
   cout << "Squared error of derivative is \n" << squared_error_der << endl;
 
-
+  //Print all the marginals
+  Marginals marginals(graph, result);
+  Matrix covMatrix = marginals.marginalCovariance(50);
+  cov.open("/media/data/logs/MPPI_SystemID/Current/Model_Parameters/cov.txt");
+  for(int i=0; i<covMatrix.rows(); i++) {
+    for(int j=0; j<covMatrix.cols(); j++){
+      cov << covMatrix(i,j) << ",";
+    }
+    cov << endl;
+  }
+  sed.close();
+  sedp.close();
+  cov.close();
 }

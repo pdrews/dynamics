@@ -8,3 +8,4 @@ file(GLOB subdir_headers "*.h")
 add_executable(dynamics ${subdir_srcs} ${subdir_headers})
 target_link_libraries(dynamics ${Boost_LIBRARIES} gtsam)
 
+gtsamAddTestsGlob(basic "tests/*.cpp" "" "gtsam;${Boost_LIBRARIES}")
