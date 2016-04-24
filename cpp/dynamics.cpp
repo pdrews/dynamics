@@ -15,6 +15,7 @@
 #include <fstream>
 #include <string>
 #include <stdlib.h>
+#include <math.h>
 
 using namespace gtsam;
 using namespace std;
@@ -32,6 +33,7 @@ int main()
   Eigen::Matrix<double,X_DIM,Eigen::Dynamic> X(X_DIM,numSamples);
   Eigen::Matrix<double,U_DIM,Eigen::Dynamic> U(U_DIM,numSamples);
   Eigen::Matrix<double,1,Eigen::Dynamic> heading(1,numSamples);
+  Eigen::Matrix<double,1,Eigen::Dynamic> beta(1,numSamples);
   data.close();
   data.open("/media/data/logs/MPPI_SystemID/Current/Model_Parameters/data.txt");
   int sampleNum = 0;
@@ -40,23 +42,32 @@ int main()
     boost::char_separator<char> sep(",");
     boost::tokenizer<boost::char_separator<char>> toks(line,sep);
     boost::tokenizer<boost::char_separator<char>>::iterator tok = toks.begin();
+    //Roll
     X(0,sampleNum) = atof(tok->c_str());
     tok++;
+    //Ux
     X(1,sampleNum) = atof(tok->c_str());
     tok++;
+    //Uy
     X(2,sampleNum) = atof(tok->c_str());
     tok++;
+    //Yaw rate
     X(3,sampleNum) = atof(tok->c_str());
     tok++;
+    //Yaw
     heading(0,sampleNum) = atof(tok->c_str());
     tok++;
+    //Throttle
     U(0,sampleNum) = atof(tok->c_str());
     tok++;
+    //Steering
     U(1,sampleNum) = atof(tok->c_str());
     left = atof(tok->c_str());
     tok++;
     right = atof(tok->c_str());
     X(4,sampleNum) = (left+right) / 2.0;
+
+    beta(0,sampleNum) = atan2(X(2,sampleNum),X(1,sampleNum));
 
     sampleNum++;
   }
@@ -75,6 +86,7 @@ int main()
       cout << "Skipping a sample between bag files" << endl;
       continue;
     }
+    // First add states
     Predictor predict(X.col(i),U.col(i),heading(0,i), dt);
     Expression<MatrixX> predict_expr(predict, theta_expr);
     graph.addExpressionFactor<MatrixX>(R, X.col(i+1), predict_expr);
