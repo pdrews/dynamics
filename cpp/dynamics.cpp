@@ -104,25 +104,29 @@ int main()
   NonlinearFactorGraph graph;
   Values vals;
 
-  Matrix1 s = Matrix1::Constant(0.3);
-  noiseModel::Diagonal::shared_ptr R3 = noiseModel::Diagonal::Sigmas(s);
-  PriorFactor<double> priormu(P(1), 0.5, R3);
+//  PriorFactor<double> priorCalpha(P(0), 0.5, noiseModel::Diagonal::Sigmas(Matrix1::Constant(0.3)));
+  PriorFactor<double> priormu(P(1), 0.6, noiseModel::Diagonal::Sigmas(Matrix1::Constant(0.00001)));
+  PriorFactor<double> priormass(P(2), 20.0, noiseModel::Diagonal::Sigmas(Matrix1::Constant(0.01)));
+  PriorFactor<double> priora(P(3), 0.45, noiseModel::Diagonal::Sigmas(Matrix1::Constant(0.001)));
+  PriorFactor<double> priorb(P(4), 0.35, noiseModel::Diagonal::Sigmas(Matrix1::Constant(0.001)));
+  PriorFactor<double> priorIz(P(5), 20.0, noiseModel::Diagonal::Sigmas(Matrix1::Constant(0.05)));
+//  PriorFactor<double> priorc1(P(6), 0.35, noiseModel::Diagonal::Sigmas(Matrix1::Constant(0.1)));
+//  PriorFactor<double> priorc2(P(7), 0.5, noiseModel::Diagonal::Sigmas(Matrix1::Constant(0.3)));
+//  PriorFactor<double> priorc3(P(8), 0.5, noiseModel::Diagonal::Sigmas(Matrix1::Constant(0.3)));
 
-  Matrix1 s5 = Matrix1::Constant(20);
-  noiseModel::Diagonal::shared_ptr R5 = noiseModel::Diagonal::Sigmas(s5);
-  PriorFactor<double> priorIz(P(5), 2.0, R5);
-
-  Matrix1 s6 = Matrix1::Constant(0.1);
-  noiseModel::Diagonal::shared_ptr R6 = noiseModel::Diagonal::Sigmas(s6);
-  PriorFactor<double> priorb(P(4), 0.35, R6);
-
-  graph.add(priormu);
-  graph.add(priorIz);
+//  graph.add(priorCalpha);
+//  graph.add(priormu);
+  graph.add(priormass);
+  graph.add(priora);
   graph.add(priorb);
+  graph.add(priorIz);
+//  graph.add(priorc1);
+//  graph.add(priorc2);
+//  graph.add(priorc3);
 
   //Put in initial guesses
   vals.insert(P(0), 100.0);
-  vals.insert(P(1), 0.5);
+  vals.insert(P(1), 0.6);
   vals.insert(P(2), 20.0);
   vals.insert(P(3), 0.45);
   vals.insert(P(4), 0.35);
@@ -211,6 +215,14 @@ int main()
   cout << "mass: " << result.at<double>(P(2)) << endl;
   cout << "a: " << result.at<double>(P(3)) << endl;
   cout << "b: " << result.at<double>(P(4)) << endl;
+  cout << "Calpha: " << result.at<double>(P(0)) << endl;
+  cout << "Iz: " << result.at<double>(P(5)) << endl;
+  cout << "c1: " << result.at<double>(P(6)) << endl;
+  cout << "c2: " << result.at<double>(P(7)) << endl;
+  cout << "c3: " << result.at<double>(P(8)) << endl;
+  cout << "b: " << result.at<double>(P(4)) << endl;
+  cout << "b: " << result.at<double>(P(4)) << endl;
+
       result.print("Final Result:\n");
 //
 //  // Get the average and mean squared error
