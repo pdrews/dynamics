@@ -31,7 +31,7 @@ int main()
 
   //Load up all of our data
   ifstream data;
-  data.open("/media/data/logs/MPPI_SystemID/Current/Model_Parameters/data.txt");
+  data.open("../data.txt");
   string line;
   int numSamples = 0;
   while(getline(data, line)) {numSamples++;}
@@ -44,7 +44,7 @@ int main()
   Eigen::Matrix<double,1,Eigen::Dynamic> ThetaDm(1,numSamples);
 
   data.close();
-  data.open("/media/data/logs/MPPI_SystemID/Current/Model_Parameters/data.txt");
+  data.open("../data.txt");
   int sampleNum = 0;
   while(getline(data, line)) {
     double left, right;
