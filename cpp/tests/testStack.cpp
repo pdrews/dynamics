@@ -108,6 +108,167 @@ TEST(Stack, cosExpression) {
 
 }
 
+TEST(Stack, sinExpression){
+  Values values;
+  double t = 1.0;
+  double eps = 1e-7;
+  double_ a((Key)2), ap((Key)3), am((Key)4);
+  values.insert(2,t);
+  values.insert(3,t+eps);
+  values.insert(4,t-eps);
+
+  std::vector<Matrix> H(1);
+  double_ sinexp = sinExpression(a);
+  double_ sinexpp = sinExpression(ap);
+  double_ sinexpm = sinExpression(am);
+
+  double der = sinexpp.value(values) - sinexpm.value(values);
+  der = der / (2.0*eps);
+  EXPECT(assert_equal(sin(t), sinexp.value(values, H)));
+  EXPECT(assert_equal(der, H[0](0)))
+
+}
+
+TEST(Stack, sinExpression2){
+  Values values;
+  double t = 1.5;
+  double eps = 1e-7;
+  double_ a((Key)2), ap((Key)3), am((Key)4);
+  values.insert(2,t);
+  values.insert(3,t+eps);
+  values.insert(4,t-eps);
+
+  std::vector<Matrix> H(1);
+  double_ sinexp = sinExpression(a);
+  double_ sinexpp = sinExpression(ap);
+  double_ sinexpm = sinExpression(am);
+
+  double der = sinexpp.value(values) - sinexpm.value(values);
+  der = der / (2.0*eps);
+  EXPECT(assert_equal(sin(t), sinexp.value(values, H)));
+  EXPECT(assert_equal(der, H[0](0)))
+}
+
+TEST(Stack, arctanExpression){
+  Values values;
+  double t = 1.5;
+  double eps = 1e-7;
+  double_ a((Key)2), ap((Key)3), am((Key)4);
+  values.insert(2,t);
+  values.insert(3,t+eps);
+  values.insert(4,t-eps);
+
+  std::vector<Matrix> H(1);
+  double_ sinexp = arctanExpression(a);
+  double_ sinexpp = arctanExpression(ap);
+  double_ sinexpm = arctanExpression(am);
+
+  double der = sinexpp.value(values) - sinexpm.value(values);
+  der = der / (2.0*eps);
+  EXPECT(assert_equal(atan(t), sinexp.value(values, H)));
+  EXPECT(assert_equal(der, H[0](0)))
+}
+
+TEST(Stack, arctanExpression2){
+  Values values;
+  double t = 1.0;
+  double eps = 1e-7;
+  double_ a((Key)2), ap((Key)3), am((Key)4);
+  values.insert(2,t);
+  values.insert(3,t+eps);
+  values.insert(4,t-eps);
+
+  std::vector<Matrix> H(1);
+  double_ sinexp = arctanExpression(a);
+  double_ sinexpp = arctanExpression(ap);
+  double_ sinexpm = arctanExpression(am);
+
+  double der = sinexpp.value(values) - sinexpm.value(values);
+  der = der / (2.0*eps);
+  EXPECT(assert_equal(atan(t), sinexp.value(values, H)));
+  EXPECT(assert_equal(der, H[0](0)))
+}
+
+TEST(Stack, tanhExpression){
+  Values values;
+  double t = 1.5;
+  double eps = 1e-7;
+  double_ a((Key)2), ap((Key)3), am((Key)4);
+  values.insert(2,t);
+  values.insert(3,t+eps);
+  values.insert(4,t-eps);
+
+  std::vector<Matrix> H(1);
+  double_ sinexp = tanhExpression(a);
+  double_ sinexpp = tanhExpression(ap);
+  double_ sinexpm = tanhExpression(am);
+
+  double der = sinexpp.value(values) - sinexpm.value(values);
+  der = der / (2.0*eps);
+  EXPECT(assert_equal(tanh(t), sinexp.value(values, H)));
+  EXPECT(assert_equal(der, H[0](0)))
+}
+
+TEST(Stack, tanhExpression2){
+  Values values;
+  double t = 1.0;
+  double eps = 1e-7;
+  double_ a((Key)2), ap((Key)3), am((Key)4);
+  values.insert(2,t);
+  values.insert(3,t+eps);
+  values.insert(4,t-eps);
+
+  std::vector<Matrix> H(1);
+  double_ sinexp = tanhExpression(a);
+  double_ sinexpp = tanhExpression(ap);
+  double_ sinexpm = tanhExpression(am);
+
+  double der = sinexpp.value(values) - sinexpm.value(values);
+  der = der / (2.0*eps);
+  EXPECT(assert_equal(tanh(t), sinexp.value(values, H)));
+  EXPECT(assert_equal(der, H[0](0)))
+}
+
+TEST(Stack, sqrtExpression){
+  Values values;
+  double t = 1.5;
+  double eps = 1e-7;
+  double_ a((Key)2), ap((Key)3), am((Key)4);
+  values.insert(2,t);
+  values.insert(3,t+eps);
+  values.insert(4,t-eps);
+
+  std::vector<Matrix> H(1);
+  double_ sinexp = sqrtExpression(a);
+  double_ sinexpp = sqrtExpression(ap);
+  double_ sinexpm = sqrtExpression(am);
+
+  double der = sinexpp.value(values) - sinexpm.value(values);
+  der = der / (2.0*eps);
+  EXPECT(assert_equal(sqrt(t), sinexp.value(values, H)));
+  EXPECT(assert_equal(der, H[0](0)))
+}
+
+TEST(Stack, sqrtExpression2){
+  Values values;
+  double t = 1.0;
+  double eps = 1e-7;
+  double_ a((Key)2), ap((Key)3), am((Key)4);
+  values.insert(2,t);
+  values.insert(3,t+eps);
+  values.insert(4,t-eps);
+
+  std::vector<Matrix> H(1);
+  double_ sinexp = sqrtExpression(a);
+  double_ sinexpp = sqrtExpression(ap);
+  double_ sinexpm = sqrtExpression(am);
+
+  double der = sinexpp.value(values) - sinexpm.value(values);
+  der = der / (2.0*eps);
+  EXPECT(assert_equal(sqrt(t), sinexp.value(values, H)));
+  EXPECT(assert_equal(der, H[0](0)))
+}
+
 /* ************************************************************************* */
 int main() { TestResult tr; return TestRegistry::runAllTests(tr);}
 /* ************************************************************************* */
