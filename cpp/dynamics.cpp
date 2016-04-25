@@ -7,6 +7,7 @@
 #include <gtsam/nonlinear/NonlinearFactorGraph.h>
 #include <gtsam/nonlinear/ExpressionFactorGraph.h>
 #include <gtsam/nonlinear/LevenbergMarquardtOptimizer.h>
+#include <gtsam/nonlinear/GaussNewtonOptimizer.h>
 #include <gtsam/nonlinear/Marginals.h>
 #include <gtsam/nonlinear/Values.h>
 #include <gtsam/slam/PriorFactor.h>
@@ -95,7 +96,7 @@ int main()
   //Parameters for fitting steering and throttle
   double_ c1('p',6); //throttle
   double_ c2('p',7); //steering
-//  double_ c3('p',8);
+  double_ c3('p',8); //throttle offset
   //Derived parameters
   double_ Fzf = (9.8 * 0.5) * MulExpression(DivExpression(b,(a+b)), mass);
   double_ Fzr = (9.8 * 0.5) * MulExpression(DivExpression(a,(a+b)), mass);
@@ -103,23 +104,41 @@ int main()
   NonlinearFactorGraph graph;
   Values vals;
 
+  Matrix1 s = Matrix1::Constant(0.3);
+  noiseModel::Diagonal::shared_ptr R3 = noiseModel::Diagonal::Sigmas(s);
+  PriorFactor<double> priormu(P(1), 0.5, R3);
+
+  Matrix1 s5 = Matrix1::Constant(20);
+  noiseModel::Diagonal::shared_ptr R5 = noiseModel::Diagonal::Sigmas(s5);
+  PriorFactor<double> priorIz(P(5), 2.0, R5);
+
+  Matrix1 s6 = Matrix1::Constant(0.1);
+  noiseModel::Diagonal::shared_ptr R6 = noiseModel::Diagonal::Sigmas(s6);
+  PriorFactor<double> priorb(P(4), 0.35, R6);
+
+  graph.add(priormu);
+  graph.add(priorIz);
+  graph.add(priorb);
+
   //Put in initial guesses
-  vals.insert(P(0), 10000.0);
+  vals.insert(P(0), 100.0);
   vals.insert(P(1), 0.5);
   vals.insert(P(2), 20.0);
   vals.insert(P(3), 0.45);
   vals.insert(P(4), 0.35);
   vals.insert(P(5), 2.0);
 
-  vals.insert(P(6), 18.0);
-  vals.insert(P(7), 70.0);
-//  vals.insert(P(8), 15.0);
+  vals.insert(P(6), 40.0);
+  vals.insert(P(7), -18.0);
+  vals.insert(P(8), 0.0);
 
 
   //Iterate through each pair in our data, putting it in our FG
-  Matrix1 sigma = Matrix1::Constant(0.1);
+  Matrix1 sigma1 = Matrix1::Constant(0.1);
+  Matrix1 sigma2 = Matrix1::Constant(0.01);
 
-  noiseModel::Diagonal::shared_ptr R = noiseModel::Diagonal::Sigmas(sigma);
+  noiseModel::Diagonal::shared_ptr R = noiseModel::Diagonal::Sigmas(sigma1);
+  noiseModel::Diagonal::shared_ptr R2 = noiseModel::Diagonal::Sigmas(sigma2);
 
 
   for(int i=0; i<numSamples-2; i++) {
@@ -138,7 +157,7 @@ int main()
     double_ beta_(betam(0,i)), thetad_(ThetaDm(0,i)), vx_(Vxm(0,i));
 //    double_ beta_('b',i), thetad_('t',i), vx_('v',i);
     double_ steering_ = U(1,i)*c2;
-    double_ throttle_ = U(0,i)*c1;
+    double_ throttle_ = U(0,i)*c1 + Vxm(0,i)*c3;
 
     if(std::abs(X(1,i) - X(1,i+1))/dt > 15) {
       cout << "Skipping a sample between bag files" << endl;
@@ -158,7 +177,7 @@ int main()
 
     graph.addExpressionFactor<double>(R, betam(0,i+1), dt*betadot);
     graph.addExpressionFactor<double>(R, Vxm(0,i+1), dt*vxdot);
-    graph.addExpressionFactor<double>(R, ThetaDm(0,i+1), dt*thetaddot);
+    graph.addExpressionFactor<double>(R2, ThetaDm(0,i+1), dt*thetaddot);
 
 //    cout << "Expression for Beta " << i << endl;
 //    betadot.print("Beta: ");
@@ -173,10 +192,18 @@ int main()
 //  vals.insert(50, Theta);
 //  //  graph.print("Factor Graph:\n");
   LevenbergMarquardtParams params;
+  params.lambdaInitial = 1e-7;
 //  params.verbosity = LevenbergMarquardtParams::Verbosity::DELTA;
-//  params.verbosityLM = LevenbergMarquardtParams::VerbosityLM::TRYDELTA;
+  params.verbosityLM = LevenbergMarquardtParams::VerbosityLM::TRYDELTA;
   LevenbergMarquardtOptimizer optimizer(graph, vals, params);
-//  optimizer.iterate();
+  optimizer.iterate();
+
+
+
+//  GaussNewtonParams params;
+//  params.verbosity = GaussNewtonParams::Verbosity::DELTA;
+//  GaussNewtonOptimizer optimizer(graph, vals, params);
+
   Values result = optimizer.optimize();
   cout << "We did " << optimizer.iterations() << " Iterations" << endl;
 //  optimizer.print("Optimizer:");
@@ -190,25 +217,48 @@ int main()
 //  Eigen::Matrix<double,X_DIM,Eigen::Dynamic> der_pred(X_DIM,numSamples);
 //  Eigen::Matrix<double,X_DIM,Eigen::Dynamic> der_actual(X_DIM,numSamples);
 //
-//  MatrixX squared_error = MatrixX::Zero();
+    Eigen::Matrix<double,3,1> squared_error = Eigen::Matrix<double,3,1>::Zero();
 //  MatrixX squared_error_der = MatrixX::Zero();
 //  MatrixBasis J;
 //  MatrixTheta thetaEst = result.at<MatrixTheta>(50);
-//  ofstream sed, sedp, cov;
-//  sed.open("/media/data/logs/MPPI_SystemID/Current/Model_Parameters/sed.txt");
-//  sedp.open("/media/data/logs/MPPI_SystemID/Current/Model_Parameters/sedp.txt");
-//  int skips = 0;
-//  for(int i=0; i<numSamples-1; i++) {
-//    if(std::abs(X(1,i) - X(1,i+1))/dt > 15) {
-//      cout << "Skipping an error between bag files" << endl;
-//      continue;
-//
-//    }
+  ofstream sed, sedp, cov;
+  sed.open("../sed.txt");
+  sedp.open("../sedp.txt");
+  int skips = 0;
+  for(int i=0; i<numSamples-1; i++) {
+    if(std::abs(X(1,i) - X(1,i+1))/dt > 15) {
+      cout << "Skipping an error between bag files" << endl;
+      continue;
+
+    }
+    //Setup prediction
+    double_ beta_(betam(0,i)), thetad_(ThetaDm(0,i)), vx_(Vxm(0,i));
+    double_ steering_ = U(1,i)*c2;
+    double_ throttle_ = U(0,i)*c1;
+    //Add prediction factor requirements
+    double_ gamma = gammaExpression(mu, Fzr, throttle_);
+    double_ alphaf = alphafExpression(beta_, a, vx_, thetad_, steering_);
+    double_ alphar = alpharExpression(beta_, a, vx_, thetad_);
+    double_ Fyr = FyrExpression(mu, Fzr, gamma, Calpha, alphar);
+    double_ Fyf = FyfExpression(mu, Fzr, Calpha, alphaf);
+    //Add prediction factors
+    double_ betadot = betadotExpression(mu, mass, vx_, thetad_, Fyf, Fyr);
+    double_ vxdot = VxdExpression(steering_, Fyf, throttle_, mass, vx_, beta_, thetad_);
+    double_ thetaddot = thetaddExpression(a, Fyf, b, Fyr, Iz);
+
+    double betapred = dt*betadot.value(result);
+    double vxpred = dt*vxdot.value(result);
+    double thetaddotpred = dt*thetaddot.value(result);
+
+    squared_error(0) += (betapred-betam(0,i+1))*(betapred-betam(0,i+1));
+    squared_error(1) += (vxpred-ThetaDm(0,i+1))*(vxpred-ThetaDm(0,i+1));
+    squared_error(2) += (thetaddotpred-Vxm(0,i+1))*(thetaddotpred-Vxm(0,i+1));
+
 //    Predictor predict(X.col(i),U.col(i),heading(i), dt);
 //    MatrixX predicted = predict(thetaEst,J);
 //    squared_error += (predicted - X.col(i+1)).cwiseProduct(predicted - X.col(i+1));
-//
-//    //Calc der stuff
+
+    //Calc der stuff
 //    MatrixX der = (X.col(i) - X.col(i+1)) / dt;
 //    MatrixX derPred = (X.col(i) - predicted) / dt;
 //    sed << der(0) << "," << der(1) << "," << der(2) << "," << der(3) << endl;
@@ -216,10 +266,10 @@ int main()
 ////    der_pred.col(i) = derPred.transpose();
 ////    der.col(i) = der.transpose();
 //    squared_error_der += (der - derPred).cwiseProduct(der - derPred);
-//  }
-//  squared_error = squared_error.array() / ((numSamples-skips)-1);
+  }
+  squared_error = squared_error.array() / ((numSamples-skips)-1);
 //  squared_error_der = squared_error_der.array() / ((numSamples-skips)-1);
-//  cout << "Squared error is \n" << squared_error << endl;
+  cout << "Squared error is \n" << squared_error << endl;
 //  cout << "Squared error of derivative is \n" << squared_error_der << endl;
 //
 //  //Print all the marginals
