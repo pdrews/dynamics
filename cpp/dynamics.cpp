@@ -14,6 +14,7 @@
 
 
 #include <boost/tokenizer.hpp>
+#include "boost/program_options.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -29,6 +30,39 @@ using symbol_shorthand::B;
 using symbol_shorthand::P;
 int main()
 {
+  namespace po = boost::program_options;
+  //Load options from config file
+  double lambda, muv, massv, av, bv, Izv, muSigmav, massSigmav, aSigmav, bSigmav, IzSigmav, c1v, c2v, c3v, calphav;
+  po::options_description desc("Allowed options");
+  desc.add_options()
+      ("help", "produce help message")
+      ("mu", po::value<double>(&muv), "")
+      ("mass", po::value<double>(&massv), "")
+      ("a", po::value<double>(&av), "")
+      ("b", po::value<double>(&bv), "")
+      ("Iz", po::value<double>(&Izv), "")
+      ("c1", po::value<double>(&c1v), "")
+      ("c2", po::value<double>(&c2v), "")
+      ("c3", po::value<double>(&c3v), "")
+      ("calpha", po::value<double>(&calphav), "")
+      ("lambda", po::value<double>(&lambda), "")
+      ("muSigma", po::value<double>(&muSigmav), "")
+      ("massSigma", po::value<double>(&massSigmav), "")
+      ("aSigma", po::value<double>(&aSigmav), "")
+      ("bSigma", po::value<double>(&bSigmav), "")
+      ("IzSigma", po::value<double>(&IzSigmav), "")
+  ;
+
+  po::variables_map options;
+  std::ifstream file("../conf.txt");
+  po::store(po::parse_config_file(file, desc), options);
+  file.close();
+  po::notify(options);
+
+  cout << muv << endl << massv << endl << av << endl <<
+      bv << endl << Izv << endl << muSigmav << endl <<
+      massSigmav << endl << aSigmav << endl <<
+      bSigmav << endl << IzSigmav << endl;
 
   //Load up all of our data
   ifstream data;
@@ -84,7 +118,7 @@ int main()
     sampleNum++;
   }
   cout << "Finished reading " << sampleNum << " samples" << endl;
-  double dt = 1.0/40.0;
+  double dt = 1.0/200.0;
 
   //Define expressions for all of our parameters
   double_ Calpha('p',0);    //About 10000???
@@ -97,25 +131,29 @@ int main()
   double_ c1('p',6); //throttle
   double_ c2('p',7); //steering
   double_ c3('p',8); //throttle offset
+
+  //Magic tire model
   //Derived parameters
-  double_ Fzf = (9.8 * 0.5) * MulExpression(DivExpression(b,(a+b)), mass);
-  double_ Fzr = (9.8 * 0.5) * MulExpression(DivExpression(a,(a+b)), mass);
+  double_ Fzf = (9.8 * 0.5) * Mul_(Div_(b,(a+b)), mass);
+  double_ Fzr = (9.8 * 0.5) * Mul_(Div_(a,(a+b)), mass);
+//  double_ Fzf(10.0);
+//  double_ Fzr(350.0);
 
   NonlinearFactorGraph graph;
   Values vals;
 
 //  PriorFactor<double> priorCalpha(P(0), 0.5, noiseModel::Diagonal::Sigmas(Matrix1::Constant(0.3)));
-  PriorFactor<double> priormu(P(1), 0.6, noiseModel::Diagonal::Sigmas(Matrix1::Constant(0.00001)));
-  PriorFactor<double> priormass(P(2), 20.0, noiseModel::Diagonal::Sigmas(Matrix1::Constant(0.01)));
-  PriorFactor<double> priora(P(3), 0.45, noiseModel::Diagonal::Sigmas(Matrix1::Constant(0.001)));
-  PriorFactor<double> priorb(P(4), 0.35, noiseModel::Diagonal::Sigmas(Matrix1::Constant(0.001)));
-  PriorFactor<double> priorIz(P(5), 20.0, noiseModel::Diagonal::Sigmas(Matrix1::Constant(0.05)));
+  PriorFactor<double> priormu(P(1), muv, noiseModel::Diagonal::Sigmas(Matrix1::Constant(muSigmav)));
+  PriorFactor<double> priormass(P(2), massv, noiseModel::Diagonal::Sigmas(Matrix1::Constant(massSigmav)));
+  PriorFactor<double> priora(P(3), av, noiseModel::Diagonal::Sigmas(Matrix1::Constant(aSigmav)));
+  PriorFactor<double> priorb(P(4), bv, noiseModel::Diagonal::Sigmas(Matrix1::Constant(bSigmav)));
+  PriorFactor<double> priorIz(P(5), Izv, noiseModel::Diagonal::Sigmas(Matrix1::Constant(IzSigmav)));
 //  PriorFactor<double> priorc1(P(6), 0.35, noiseModel::Diagonal::Sigmas(Matrix1::Constant(0.1)));
 //  PriorFactor<double> priorc2(P(7), 0.5, noiseModel::Diagonal::Sigmas(Matrix1::Constant(0.3)));
 //  PriorFactor<double> priorc3(P(8), 0.5, noiseModel::Diagonal::Sigmas(Matrix1::Constant(0.3)));
 
 //  graph.add(priorCalpha);
-//  graph.add(priormu);
+  graph.add(priormu);
   graph.add(priormass);
   graph.add(priora);
   graph.add(priorb);
@@ -125,16 +163,16 @@ int main()
 //  graph.add(priorc3);
 
   //Put in initial guesses
-  vals.insert(P(0), 100.0);
-  vals.insert(P(1), 0.6);
-  vals.insert(P(2), 20.0);
-  vals.insert(P(3), 0.45);
-  vals.insert(P(4), 0.35);
-  vals.insert(P(5), 2.0);
+  vals.insert(P(0), calphav);
+  vals.insert(P(1), muv);
+  vals.insert(P(2), massv);
+  vals.insert(P(3), av);
+  vals.insert(P(4), bv);
+  vals.insert(P(5), Izv);
 
-  vals.insert(P(6), 40.0);
-  vals.insert(P(7), -18.0);
-  vals.insert(P(8), 0.0);
+  vals.insert(P(6), c1v);
+  vals.insert(P(7), c2v);
+  vals.insert(P(8), c3v);
 
 
   //Iterate through each pair in our data, putting it in our FG
@@ -161,9 +199,11 @@ int main()
     double_ beta_(betam(0,i)), thetad_(ThetaDm(0,i)), vx_(Vxm(0,i));
 //    double_ beta_('b',i), thetad_('t',i), vx_('v',i);
     double_ steering_ = U(1,i)*c2;
-    double_ throttle_ = U(0,i)*c1 + Vxm(0,i)*c3;
+      double_ throttle_ = Mul_(mu,Mul_(Fzr,tanh_(Mul_(U(0,i),c1)))) - Vxm(0,i)*c3;
+//        double_ throttle_ = U(0,i)*c1;// + Vxm(0,i)*c3;
 
-    if(std::abs(X(1,i) - X(1,i+1))/dt > 15) {
+    if(std::abs(X(1,i) - X(1,i+1)) > 15) {
+      cout << X(1,i) << " " << X(1,i+1) << endl;
       cout << "Skipping a sample between bag files" << endl;
       continue;
     }
@@ -179,9 +219,9 @@ int main()
     double_ vxdot = VxdExpression(steering_, Fyf, throttle_, mass, vx_, beta_, thetad_);
     double_ thetaddot = thetaddExpression(a, Fyf, b, Fyr, Iz);
 
-    graph.addExpressionFactor<double>(R, betam(0,i+1), dt*betadot);
-    graph.addExpressionFactor<double>(R, Vxm(0,i+1), dt*vxdot);
-    graph.addExpressionFactor<double>(R2, ThetaDm(0,i+1), dt*thetaddot);
+    graph.addExpressionFactor<double>(R, betam(0,i+1) - betam(0,i), (dt*betadot));
+    graph.addExpressionFactor<double>(R, Vxm(0,i+1) - Vxm(0,i), (dt*vxdot));
+    graph.addExpressionFactor<double>(R2, ThetaDm(0,i+1) - ThetaDm(0,i), (dt*thetaddot));
 
 //    cout << "Expression for Beta " << i << endl;
 //    betadot.print("Beta: ");
@@ -196,9 +236,9 @@ int main()
 //  vals.insert(50, Theta);
 //  //  graph.print("Factor Graph:\n");
   LevenbergMarquardtParams params;
-  params.lambdaInitial = 1e-7;
+  params.lambdaInitial = lambda;
 //  params.verbosity = LevenbergMarquardtParams::Verbosity::DELTA;
-  params.verbosityLM = LevenbergMarquardtParams::VerbosityLM::TRYDELTA;
+  params.verbosityLM = LevenbergMarquardtParams::VerbosityLM::SUMMARY;
   LevenbergMarquardtOptimizer optimizer(graph, vals, params);
   optimizer.iterate();
 
@@ -219,9 +259,7 @@ int main()
   cout << "Iz: " << result.at<double>(P(5)) << endl;
   cout << "c1: " << result.at<double>(P(6)) << endl;
   cout << "c2: " << result.at<double>(P(7)) << endl;
-  cout << "c3: " << result.at<double>(P(8)) << endl;
-  cout << "b: " << result.at<double>(P(4)) << endl;
-  cout << "b: " << result.at<double>(P(4)) << endl;
+//  cout << "c3: " << result.at<double>(P(8)) << endl;
 
       result.print("Final Result:\n");
 //
@@ -238,10 +276,10 @@ int main()
   sedp.open("../sedp.txt");
   int skips = 0;
   for(int i=0; i<numSamples-1; i++) {
-    if(std::abs(X(1,i) - X(1,i+1))/dt > 15) {
-      cout << "Skipping an error between bag files" << endl;
+    if(std::abs(X(1,i) - X(1,i+1)) > 15) {
+      cout << X(1,i) << " " << X(1,i+1) << endl;
+      cout << "Skipping a sample between bag files" << endl;
       continue;
-
     }
     //Setup prediction
     double_ beta_(betam(0,i)), thetad_(ThetaDm(0,i)), vx_(Vxm(0,i));
@@ -258,43 +296,16 @@ int main()
     double_ vxdot = VxdExpression(steering_, Fyf, throttle_, mass, vx_, beta_, thetad_);
     double_ thetaddot = thetaddExpression(a, Fyf, b, Fyr, Iz);
 
-    double betapred = dt*betadot.value(result);
-    double vxpred = dt*vxdot.value(result);
-    double thetaddotpred = dt*thetaddot.value(result);
+    double betapred = betam(0,i) + dt*betadot.value(result);
+    double vxpred = Vxm(0,i) + dt*vxdot.value(result);
+    double thetaddotpred = ThetaDm(0,i) + dt*thetaddot.value(result);
 
     squared_error(0) += (betapred-betam(0,i+1))*(betapred-betam(0,i+1));
-    squared_error(1) += (vxpred-ThetaDm(0,i+1))*(vxpred-ThetaDm(0,i+1));
-    squared_error(2) += (thetaddotpred-Vxm(0,i+1))*(thetaddotpred-Vxm(0,i+1));
+    squared_error(1) += (vxpred-Vxm(0,i+1))*(vxpred-Vxm(0,i+1));
+    squared_error(2) += (thetaddotpred-ThetaDm(0,i+1))*(thetaddotpred-ThetaDm(0,i+1));
 
-//    Predictor predict(X.col(i),U.col(i),heading(i), dt);
-//    MatrixX predicted = predict(thetaEst,J);
-//    squared_error += (predicted - X.col(i+1)).cwiseProduct(predicted - X.col(i+1));
-
-    //Calc der stuff
-//    MatrixX der = (X.col(i) - X.col(i+1)) / dt;
-//    MatrixX derPred = (X.col(i) - predicted) / dt;
-//    sed << der(0) << "," << der(1) << "," << der(2) << "," << der(3) << endl;
-//    sedp << derPred(0) << "," << derPred(1) << "," << derPred(2) << "," << derPred(3) << endl;
-////    der_pred.col(i) = derPred.transpose();
-////    der.col(i) = der.transpose();
-//    squared_error_der += (der - derPred).cwiseProduct(der - derPred);
   }
   squared_error = squared_error.array() / ((numSamples-skips)-1);
-//  squared_error_der = squared_error_der.array() / ((numSamples-skips)-1);
   cout << "Squared error is \n" << squared_error << endl;
-//  cout << "Squared error of derivative is \n" << squared_error_der << endl;
-//
-//  //Print all the marginals
-//  Marginals marginals(graph, result);
-//  Matrix covMatrix = marginals.marginalCovariance(50);
-//  cov.open("/media/data/logs/MPPI_SystemID/Current/Model_Parameters/cov.txt");
-//  for(int i=0; i<covMatrix.rows(); i++) {
-//    for(int j=0; j<covMatrix.cols(); j++){
-//      cov << covMatrix(i,j) << ",";
-//    }
-//    cov << endl;
-//  }
-//  sed.close();
-//  sedp.close();
-//  cov.close();
+
 }

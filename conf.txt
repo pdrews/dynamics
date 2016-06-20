@@ -1,0 +1,15 @@
+mu=0.65
+mass=20
+a=0.45
+b=0.35
+Iz=80
+c1=1
+c2=-15
+c3=0
+calpha=550
+lambda=1e-1
+muSigma=0.0003
+massSigma=0.0001
+aSigma=0.0001
+bSigma=0.0001
+IzSigma=0.0001

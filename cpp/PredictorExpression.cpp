@@ -117,7 +117,7 @@ double_ arctanExpression(const double_& expression) {
   return double_(g, expression);
 }
 
-double_ tanhExpression(const double_& expression) {
+double_ tanh_(const double_& expression) {
   // Use lambda to calculate the Jacobian
   typename double_::template UnaryFunction<double>::type g =
       [=](const double& value, OptionalJacobian<1,1> H) {
@@ -128,12 +128,15 @@ double_ tanhExpression(const double_& expression) {
   return double_(g, expression);
 }
 
-double_ sqrtExpression(const double_& expression) {
+double_ sqrt_(const double_& expression) {
   // Use lambda to calculate the Jacobian
   typename double_::template UnaryFunction<double>::type g =
       [=](const double& value, OptionalJacobian<1,1> H) {
         if (H) {
           assert(value > 0);
+          //if (value < 0) {
+          //  std::cout << "Val too high!! " << value << std::endl;
+         // }
           *H << 1/(2*sqrt(value));
         }
         return sqrt(value);
@@ -141,37 +144,37 @@ double_ sqrtExpression(const double_& expression) {
   return double_(g, expression);
 }
 
-double_ MulExpression(
+double_ Mul_(
     const double_& expression1, const double_& expression2) {
   typename double_::template BinaryFunction<double,double>::type g =
-      [=](const double& value1, const double& value2, OptionalJacobian<1,1> H1, OptionalJacobian<1, 1> H2) {
+      [=](const double& x, const double& y, OptionalJacobian<1,1> H1, OptionalJacobian<1, 1> H2) {
         if (H1)
-          *H1 << value2;
+          *H1 << y;
         if (H2)
-          *H2 << value1;
-        return value1 * value2;
+          *H2 << x;
+        return x * y;
       };
   return double_(g, expression1, expression2);
 }
 
-double_ DivExpression(
+double_ Div_(
     const double_& expression1, const double_& expression2) {
   typename double_::template BinaryFunction<double,double>::type g =
-      [=](const double& value1, const double& value2, OptionalJacobian<1,1> H1, OptionalJacobian<1, 1> H2) {
+      [=](const double& x, const double& y, OptionalJacobian<1,1> H1, OptionalJacobian<1, 1> H2) {
         if (H1)
-          *H1 << 1.0/value2;
+          *H1 << 1.0/y;
         if (H2)
-          *H2 << value1/(value2*value2);
-        return value1 / value2;
+          *H2 << x/(y*y);
+        return x / y;
       };
   return double_(g, expression1, expression2);
 }
 
 double_ gammaExpression(const double_& mu,
         const double_& Fz, const double_& U2){
-  double_ muFz = MulExpression(mu,Fz);
-  double_ e1 = MulExpression(muFz, muFz) - MulExpression(U2,U2);
-  return DivExpression(e1,muFz);
+  double_ muFz = Mul_(mu,Fz);
+  double_ e1 = Mul_(muFz, muFz) - Mul_(U2,U2);
+  return Div_(sqrt_(e1),muFz);
 //  return (((mu*Fz) * (mu*Fz)) - (U2*U2))/(mu*Fz);
 }
 
@@ -184,16 +187,16 @@ double_ gammaExpression(const double_& mu,
 double_ FyrExpression(const double_& mu,
     const double_& Fz, const double_& gamma,
     const double_& cAlpha, const double_& alpha) {
-  double_ e1 = tanhExpression(MulExpression(cAlpha,alpha));
-  return(-1*MulExpression(gamma,MulExpression(mu,MulExpression(Fz,e1))));
+  double_ e1 = tanh_(Mul_(cAlpha,alpha));
+  return(-1*Mul_(gamma,Mul_(mu,Mul_(Fz,Div_(e1,gamma)))));
 //  return(-1*gamma*mu*Fz*tanhExpression(cAlpha*alpha));
 }
 
 double_ FyfExpression(const double_& mu,
     const double_& Fz,
     const double_& cAlpha, const double_& alpha) {
-  double_ e1 = tanhExpression(MulExpression(cAlpha,alpha));
-  return(-1*MulExpression(mu,MulExpression(Fz,e1)));
+  double_ e1 = tanh_(Mul_(cAlpha,alpha));
+  return(-1.0*Mul_(mu,Mul_(Fz,e1)));
 //  return(-1*mu*Fz*tanhExpression(cAlpha*alpha));
 }
 
@@ -201,35 +204,35 @@ double_ betadotExpression(const double_& mu,
     const double_& m, const double_& Vx,
     const double_& thetad, const double_& Fyf,
     const double_& Fyr) {
-  return DivExpression((Fyf + Fyr),MulExpression(m,Vx)) - thetad;
+  return Div_((Fyf + Fyr),Mul_(m,Vx)) - thetad;
 }
 
 double_ VxdExpression(const double_& steering,
     const double_& Fyf, const double_& throttle,
     const double_& m, const double_& Vx,
     const double_& beta, const double_& thetad) {
-  double_ e1 = MulExpression(Vx,MulExpression(beta,thetad));
-  return DivExpression((steering - MulExpression(Fyf,sinExpression(throttle))),m)+ e1;
+  double_ e1 = Mul_(Vx,Mul_(beta,thetad));
+  return Div_((steering - Mul_(Fyf,sinExpression(throttle))),m)+ e1;
 //  return ((U2 - (Fyf*sinExpression(U1)))/m)+ (Vx*beta*thetad);
 }
 
 double_ thetaddExpression(const double_& a,
     const double_& Fyf, const double_& b,
     const double_& Fyr, const double_& Iz) {
-  return DivExpression(MulExpression(a,Fyf) - MulExpression(b,Fyr),Iz);
+  return Div_(Mul_(a,Fyf) - Mul_(b,Fyr),Iz);
 //  return ((a*Fyf) - (b*Fyr))/Iz;
 }
 
 double_ alphafExpression(const double_& beta,
     const double_& a, const double_& Vx,
     const double_& thetad, const double_& delta) {
-  return arctanExpression(beta + MulExpression(DivExpression(a,Vx), thetad)) - delta;
+  return arctanExpression(beta + Mul_(Div_(a,Vx), thetad)) - delta;
 }
 
 double_ alpharExpression(const double_& beta,
     const double_& a, const double_& Vx,
     const double_& thetad) {
-  return arctanExpression(beta - MulExpression(DivExpression(a,Vx), thetad));
+  return arctanExpression(beta - Mul_(Div_(a,Vx), thetad));
 //  return arctanExpression(beta - ((a/Vx) * thetad));
 }
 }

@@ -33,12 +33,12 @@ TEST(Stack, Exp2) {
   values.insert(11, a2);
   Expression<Vector2> exp = StackExpression2<Vector2,Vector1>(e1, e2);
 
-  cout << " Values 10 " << values.at<Vector1>(10) << endl;
-  cout << " Values 11 " << values.at<Vector1>(11) << endl;
-  cout << " Vector a1 " << a1 << endl;
-  cout << " Vector a2 " << a2 << endl;
+//  cout << " Values 10 " << values.at<Vector1>(10) << endl;
+//  cout << " Values 11 " << values.at<Vector1>(11) << endl;
+//  cout << " Vector a1 " << a1 << endl;
+//  cout << " Vector a2 " << a2 << endl;
 
-  EXPECT(assert_equal(expected, exp.value(values)));
+  EXPECT(assert_equal(expected, exp.value(values),1e-7));
 }
 
 /* ************************************************************************* */
@@ -53,12 +53,12 @@ TEST(Stack, Exp2double) {
   values.insert(11, a2);
   Expression<Vector2> exp = StackExpression2<Vector2,double>(e1, e2);
 
-  cout << " Values 10 " << values.at<double>(10) << endl;
-  cout << " Values 11 " << values.at<double>(11) << endl;
-  cout << " Vector a1 " << a1 << endl;
-  cout << " Vector a2 " << a2 << endl;
+//  cout << " Values 10 " << values.at<double>(10) << endl;
+//  cout << " Values 11 " << values.at<double>(11) << endl;
+//  cout << " Vector a1 " << a1 << endl;
+//  cout << " Vector a2 " << a2 << endl;
 
-  EXPECT(assert_equal(expected, exp.value(values)));
+  EXPECT(assert_equal(expected, exp.value(values),1e-7));
 }
 
 TEST(Stack, Exp3) {
@@ -76,7 +76,7 @@ TEST(Stack, Exp3) {
   values.insert(12, a3);
   Expression<Vector3> exp = StackExpression3<Vector3,Vector1>(e1, e2, e3);
 
-  EXPECT(assert_equal(expected, exp.value(values)));
+  EXPECT(assert_equal(expected, exp.value(values),1e-7));
 }
 
 TEST(Stack, cosExpression) {
@@ -93,18 +93,18 @@ TEST(Stack, cosExpression) {
   Matrix1 Hexp;
   std::vector<Matrix> H(1);
   Hexp << -sin(1);
-  EXPECT(assert_equal(cos(1), exp.value(values, H)));
-  EXPECT(assert_equal(Hexp, H[0]))
+  EXPECT(assert_equal(cos(1), exp.value(values, H),1e-7));
+  EXPECT(assert_equal(Hexp, H[0],1e-7))
 
   Hexp << -sin(0);
   Expression<double> exp2 = cosExpression(e2);
-  EXPECT(assert_equal(cos(0), exp2.value(values, H)));
-  EXPECT(assert_equal(Hexp, H[0]))
+  EXPECT(assert_equal(cos(0), exp2.value(values, H),1e-7));
+  EXPECT(assert_equal(Hexp, H[0],1e-7))
 
   Hexp << -sin(2);
   Expression<double> exp3 = cosExpression(e3);
-  EXPECT(assert_equal(cos(2), exp3.value(values, H)));
-  EXPECT(assert_equal(Hexp, H[0]))
+  EXPECT(assert_equal(cos(2), exp3.value(values, H),1e-7));
+  EXPECT(assert_equal(Hexp, H[0],1e-7))
 
 }
 
@@ -124,8 +124,8 @@ TEST(Stack, sinExpression){
 
   double der = sinexpp.value(values) - sinexpm.value(values);
   der = der / (2.0*eps);
-  EXPECT(assert_equal(sin(t), sinexp.value(values, H)));
-  EXPECT(assert_equal(der, H[0](0)))
+  EXPECT(assert_equal(sin(t), sinexp.value(values, H),1e-7));
+  EXPECT(assert_equal(der, H[0](0),1e-7))
 
 }
 
@@ -145,8 +145,8 @@ TEST(Stack, sinExpression2){
 
   double der = sinexpp.value(values) - sinexpm.value(values);
   der = der / (2.0*eps);
-  EXPECT(assert_equal(sin(t), sinexp.value(values, H)));
-  EXPECT(assert_equal(der, H[0](0)))
+  EXPECT(assert_equal(sin(t), sinexp.value(values, H),1e-7));
+  EXPECT(assert_equal(der, H[0](0),1e-7))
 }
 
 TEST(Stack, arctanExpression){
@@ -165,8 +165,8 @@ TEST(Stack, arctanExpression){
 
   double der = sinexpp.value(values) - sinexpm.value(values);
   der = der / (2.0*eps);
-  EXPECT(assert_equal(atan(t), sinexp.value(values, H)));
-  EXPECT(assert_equal(der, H[0](0)))
+  EXPECT(assert_equal(atan(t), sinexp.value(values, H),1e-7));
+  EXPECT(assert_equal(der, H[0](0),1e-7))
 }
 
 TEST(Stack, arctanExpression2){
@@ -185,11 +185,11 @@ TEST(Stack, arctanExpression2){
 
   double der = sinexpp.value(values) - sinexpm.value(values);
   der = der / (2.0*eps);
-  EXPECT(assert_equal(atan(t), sinexp.value(values, H)));
-  EXPECT(assert_equal(der, H[0](0)))
+  EXPECT(assert_equal(atan(t), sinexp.value(values, H),1e-7));
+  EXPECT(assert_equal(der, H[0](0),1e-7))
 }
 
-TEST(Stack, tanhExpression){
+TEST(Stack, tanh_){
   Values values;
   double t = 1.5;
   double eps = 1e-7;
@@ -199,14 +199,14 @@ TEST(Stack, tanhExpression){
   values.insert(4,t-eps);
 
   std::vector<Matrix> H(1);
-  double_ sinexp = tanhExpression(a);
-  double_ sinexpp = tanhExpression(ap);
-  double_ sinexpm = tanhExpression(am);
+  double_ sinexp = tanh_(a);
+  double_ sinexpp = tanh_(ap);
+  double_ sinexpm = tanh_(am);
 
   double der = sinexpp.value(values) - sinexpm.value(values);
   der = der / (2.0*eps);
-  EXPECT(assert_equal(tanh(t), sinexp.value(values, H)));
-  EXPECT(assert_equal(der, H[0](0)))
+  EXPECT(assert_equal(tanh(t), sinexp.value(values, H),1e-7));
+  EXPECT(assert_equal(der, H[0](0),1e-7))
 }
 
 TEST(Stack, tanhExpression2){
@@ -219,17 +219,17 @@ TEST(Stack, tanhExpression2){
   values.insert(4,t-eps);
 
   std::vector<Matrix> H(1);
-  double_ sinexp = tanhExpression(a);
-  double_ sinexpp = tanhExpression(ap);
-  double_ sinexpm = tanhExpression(am);
+  double_ sinexp = tanh_(a);
+  double_ sinexpp = tanh_(ap);
+  double_ sinexpm = tanh_(am);
 
   double der = sinexpp.value(values) - sinexpm.value(values);
   der = der / (2.0*eps);
-  EXPECT(assert_equal(tanh(t), sinexp.value(values, H)));
-  EXPECT(assert_equal(der, H[0](0)))
+  EXPECT(assert_equal(tanh(t), sinexp.value(values, H),1e-7));
+  EXPECT(assert_equal(der, H[0](0),1e-7))
 }
 
-TEST(Stack, sqrtExpression){
+TEST(Stack, sqrt_){
   Values values;
   double t = 1.5;
   double eps = 1e-7;
@@ -239,14 +239,14 @@ TEST(Stack, sqrtExpression){
   values.insert(4,t-eps);
 
   std::vector<Matrix> H(1);
-  double_ sinexp = sqrtExpression(a);
-  double_ sinexpp = sqrtExpression(ap);
-  double_ sinexpm = sqrtExpression(am);
+  double_ sinexp = sqrt_(a);
+  double_ sinexpp = sqrt_(ap);
+  double_ sinexpm = sqrt_(am);
 
   double der = sinexpp.value(values) - sinexpm.value(values);
   der = der / (2.0*eps);
-  EXPECT(assert_equal(sqrt(t), sinexp.value(values, H)));
-  EXPECT(assert_equal(der, H[0](0)))
+  EXPECT(assert_equal(sqrt(t), sinexp.value(values, H),1e-7));
+  EXPECT(assert_equal(der, H[0](0),1e-7))
 }
 
 TEST(Stack, sqrtExpression2){
@@ -259,16 +259,134 @@ TEST(Stack, sqrtExpression2){
   values.insert(4,t-eps);
 
   std::vector<Matrix> H(1);
-  double_ sinexp = sqrtExpression(a);
-  double_ sinexpp = sqrtExpression(ap);
-  double_ sinexpm = sqrtExpression(am);
+  double_ sinexp = sqrt_(a);
+  double_ sinexpp = sqrt_(ap);
+  double_ sinexpm = sqrt_(am);
 
   double der = sinexpp.value(values) - sinexpm.value(values);
   der = der / (2.0*eps);
-  EXPECT(assert_equal(sqrt(t), sinexp.value(values, H)));
-  EXPECT(assert_equal(der, H[0](0)))
+  EXPECT(assert_equal(sqrt(t), sinexp.value(values, H),1e-7));
+  EXPECT(assert_equal(der, H[0](0),1e-7))
+}
+
+TEST(Stack, Mul_){
+  Values values;
+  double x = 1.0;
+  double y = 1.5;
+  double eps = 1e-7;
+  double_ a((Key)2), ap((Key)3), am((Key)4);
+  double_ b((Key)5), bp((Key)6), bm((Key)7);
+  values.insert(2,x);
+  values.insert(3,x+eps);
+  values.insert(4,x-eps);
+  values.insert(5,y);
+  values.insert(6,y+eps);
+  values.insert(7,y-eps);
+  std::vector<Matrix> H(2);
+  double_ a_ = Mul_(a,b);
+  double_ ap_ = Mul_(ap,b);
+  double_ am_ = Mul_(am,b);
+  double_ b_ = Mul_(a,b);
+  double_ bp_ = Mul_(a,bp);
+  double_ bm_ = Mul_(a,bm);
+  double dera = ap_.value(values) - am_.value(values);
+  double derb = bp_.value(values) - bm_.value(values);
+  dera = dera / (2.0*eps);
+  derb = derb / (2.0*eps);
+  EXPECT(assert_equal(x*y, a_.value(values, H),1e-7));
+  EXPECT(assert_equal(dera, H[0](0),1e-7));
+  EXPECT(assert_equal(derb, H[1](0),1e-7));
+}
+
+TEST(Stack, Mul_2){
+  Values values;
+  double x = 1.95;
+  double y = 18.2;
+  double eps = 1e-7;
+  double_ a((Key)2), ap((Key)3), am((Key)4);
+  double_ b((Key)5), bp((Key)6), bm((Key)7);
+  values.insert(2,x);
+  values.insert(3,x+eps);
+  values.insert(4,x-eps);
+  values.insert(5,y);
+  values.insert(6,y+eps);
+  values.insert(7,y-eps);
+  std::vector<Matrix> H(2);
+  double_ a_ = Mul_(a,b);
+  double_ ap_ = Mul_(ap,b);
+  double_ am_ = Mul_(am,b);
+  double_ b_ = Mul_(a,b);
+  double_ bp_ = Mul_(a,bp);
+  double_ bm_ = Mul_(a,bm);
+  double dera = ap_.value(values) - am_.value(values);
+  double derb = bp_.value(values) - bm_.value(values);
+  dera = dera / (2.0*eps);
+  derb = derb / (2.0*eps);
+  EXPECT(assert_equal(x*y, a_.value(values, H),1e-7));
+  EXPECT(assert_equal(dera, H[0](0),1e-7));
+  EXPECT(assert_equal(derb, H[1](0),1e-7));
+}
+
+TEST(Stack, divExpression){
+  Values values;
+  double x = 1.0;
+  double y = 1.5;
+  double eps = 1e-7;
+  double_ a((Key)2), ap((Key)3), am((Key)4);
+  double_ b((Key)5), bp((Key)6), bm((Key)7);
+  values.insert(2,x);
+  values.insert(3,x+eps);
+  values.insert(4,x-eps);
+  values.insert(5,y);
+  values.insert(6,y+eps);
+  values.insert(7,y-eps);
+  std::vector<Matrix> H(2);
+  double_ a_ = Div_(a,b);
+  double_ ap_ = Div_(ap,b);
+  double_ am_ = Div_(am,b);
+  double_ b_ = Div_(a,b);
+  double_ bp_ = Div_(a,bp);
+  double_ bm_ = Div_(a,bm);
+  double dera = ap_.value(values) - am_.value(values);
+  double derb = bp_.value(values) - bm_.value(values);
+  dera = dera / (2.0*eps);
+  derb = derb / (2.0*eps);
+  EXPECT(assert_equal(x/y, a_.value(values, H),1e-7));
+  EXPECT(assert_equal(dera, H[0](0),1e-7));
+  EXPECT(assert_equal(derb, H[1](0),1e-7));
+}
+
+TEST(Stack, divExpression2){
+  Values values;
+  double x = 1.95;
+  double y = 18.2;
+  double eps = 1e-7;
+  double_ a((Key)2), ap((Key)3), am((Key)4);
+  double_ b((Key)5), bp((Key)6), bm((Key)7);
+  values.insert(2,x);
+  values.insert(3,x+eps);
+  values.insert(4,x-eps);
+  values.insert(5,y);
+  values.insert(6,y+eps);
+  values.insert(7,y-eps);
+  std::vector<Matrix> H(2);
+  double_ a_ = Div_(a,b);
+  double_ ap_ = Div_(ap,b);
+  double_ am_ = Div_(am,b);
+  double_ b_ = Div_(a,b);
+  double_ bp_ = Div_(a,bp);
+  double_ bm_ = Div_(a,bm);
+  double dera = ap_.value(values) - am_.value(values);
+  double derb = bp_.value(values) - bm_.value(values);
+  dera = dera / (2.0*eps);
+  derb = derb / (2.0*eps);
+  EXPECT(assert_equal(x/y, a_.value(values, H),1e-7));
+  EXPECT(assert_equal(dera, H[0](0),1e-7));
+  EXPECT(assert_equal(derb, H[1](0),1e-7));
 }
 
 /* ************************************************************************* */
 int main() { TestResult tr; return TestRegistry::runAllTests(tr);}
 /* ************************************************************************* */
+
+#include "../PredictorExpression.cpp"

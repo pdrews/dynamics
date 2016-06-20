@@ -30,7 +30,7 @@ find_package(GTSAM REQUIRED NO_MODULE)
 if(NOT Boost_USE_STATIC_LIBS)
 	add_definitions(-DBOOST_ALL_DYN_LINK)
 endif()
-find_package(Boost 1.43 COMPONENTS serialization thread date_time REQUIRED)
+find_package(Boost 1.43 COMPONENTS serialization thread date_time program_options REQUIRED)
 
 # Only works with OpenCV 2.4.x
 #find_package(OpenCV REQUIRED)

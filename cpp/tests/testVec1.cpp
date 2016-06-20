@@ -35,8 +35,8 @@ TEST(Vec1, test) {
 
   Expression<double> e1 = Expression<double>(key1) + Expression<double>(key2);
   Expression<double> e2 = Expression<double>(key1) - Expression<double>(key2);
-  Expression<double> e3 = MulExpression(Expression<double>(key1), Expression<double>(key2));
-  Expression<double> e4 = DivExpression(Expression<double>(key1), Expression<double>(key2));
+  Expression<double> e3 = Mul_(Expression<double>(key1), Expression<double>(key2));
+  Expression<double> e4 = Div_(Expression<double>(key1), Expression<double>(key2));
 
   Values values;
 
@@ -66,3 +66,6 @@ TEST(Vec1, test) {
 /* ************************************************************************* */
 int main() { TestResult tr; return TestRegistry::runAllTests(tr);}
 /* ************************************************************************* */
+
+#include "../PredictorExpression.cpp"
+

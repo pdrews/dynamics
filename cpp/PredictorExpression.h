@@ -50,14 +50,14 @@ double_ sinExpression(const double_& expression);
 
 double_ arctanExpression(const double_& expression);
 
-double_ tanhExpression(const double_& expression);
+double_ tanh_(const double_& expression);
 
-double_ sqrtExpression(const double_& expression);
+double_ sqrt_(const double_& expression);
 
-double_ MulExpression(
+double_ Mul_(
     const double_& expression1, const double_& expression2);
 
-double_ DivExpression(
+double_ Div_(
     const double_& expression1, const double_& expression2);
 
 double_ gammaExpression(const double_& mu,
